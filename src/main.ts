@@ -1,14 +1,11 @@
 // import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
-import { join } from 'path';
-import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 import * as compression from 'compression';
 import helmet = require('helmet');
 
 import { logger } from './common/logger';
-import { ValidationPipe } from './common/pipes/validation.pipe';
-import { LoggingInterceptor, TransformInterceptor } from './common/interceptors';
+import { LoggingInterceptor } from './common/interceptors/';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
@@ -29,21 +26,9 @@ async function bootstrap() {
   app.setViewEngine('ejs');
   app.enableCors();
 
-  app.useGlobalPipes(new ValidationPipe());
-  app.useGlobalInterceptors(new TransformInterceptor());
-
-  if (process.env.NODE_ENV === 'deployment') {
+  if (process.env.NODE_ENV !== 'production') {
     app.useGlobalInterceptors(new LoggingInterceptor());
   }
-  app.connectMicroservice<MicroserviceOptions>({
-    transport: Transport.GRPC,
-    options: {
-      url: '127.0.0.1:3001',
-      package: 'nt_module_test',
-      protoPath: join(__dirname, './nt_module_test.proto'),
-    },
-  });
-  await app.startAllMicroservicesAsync();
 
   await app.listen(3000);
 
